@@ -1,0 +1,9 @@
+Mean-shift:
+https://blog.csdn.net/ttransposition/article/details/38514127
+https://blog.csdn.net/ttransposition/article/details/38514271
+https://blog.csdn.net/ttransposition/article/details/38514443
+
+https://en.wikipedia.org/wiki/Mean_shift
+
+Graph cuts
+https://raw.githubusercontent.com/txzhao/Image-Analysis-Computer-Vision/master/image-segmentation/script/mixture_prob.m

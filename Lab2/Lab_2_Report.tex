@@ -1,0 +1,292 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{algorithm, algorithmic, listings} % Code
+\usepackage{amsmath,mathtools,amssymb,amsfonts,dsfont,cancel} % Math
+\usepackage{amstext}
+\usepackage{color, xcolor} % Color
+\usepackage{diagbox, tabularx} % Table
+\usepackage{enumerate} % List
+\usepackage{epsfig, epstopdf, graphicx, multicol, multirow, palatino, pgfplots, subcaption, tikz} % Image.
+\usepackage{fancybox}
+\usepackage{verbatim}
+
+\usepackage[font=footnotesize]{caption} % labelfont=bf
+\usepackage[margin=1in]{geometry}
+\usepackage[hidelinks]{hyperref}
+\epstopdfsetup{outdir=./Figure/Converted/}
+\graphicspath{{./Figure/}}
+
+\makeatletter
+\def\input@path{{./Figure/}}
+\makeatother
+
+% MATLAB code settings
+\lstset{extendedchars=false, % Shutdown no-ASCII compatible
+basicstyle=\normalsize\tt, % the size of the fonts that are used for the code
+language=Matlab, tabsize=4, numbers=left, numberstyle=\small, stepnumber=1, numbersep=8pt, keywordstyle=\color[rgb]{0,0,1}, commentstyle=\color[rgb]{0.133,0.545,0.133}, stringstyle=\color[rgb]{0.627,0.126,0.941}, backgroundcolor=\color{white}, showspaces=false, showstringspaces=false, showtabs=false, frame=single, captionpos=t, breaklines=true, breakatwhitespace=false, morekeywords={break, case, catch, continue, elseif, else, end, for, function, global, if, otherwise, persistent, return, switch, try, while}, title=\lstname,
+mathescape=true,escapechar=? % escape to latex with ?..?  
+escapeinside={\%*}{*)}, % if you want to add a comment within your code  
+%morestring=[m]', % strings
+%columns=fixed, % nice spacing
+}
+
+\begin{document}
+\title{\sc\vspace{3cm}\hrule\vspace{0.3cm}{\LARGE DD2423}\\\vspace{0.1cm}{\Large Image Analysis and Computer Vision}\vspace{0.3cm}\hrule\vspace{1.5cm}{\Large Laboratory Report}\\{\large Lab 2: Edge Detection \& Hough Transform}}
+\author{Jiang, Sifan\\sifanj@kth.se}
+\maketitle
+\newpage
+
+\newcounter{Counter}
+\setcounter{Counter}{0}
+
+\section*{1\hspace{0.5cm}Difference operators}
+	\begin{itemize}
+		\item\addtocounter{Counter}{1}\textbf{Question \arabic{Counter}:} What do you expect the results to look like and why? Compare the size of \texttt{dxtools} with the size of \texttt{tools}. Why are these sizes different?
+			\par The $x$-wise derivative is expected to be an image with the edge of the original image in the $x$ direction. The $y$-wise derivative is expected to be an image with the edge of the original image in the $y$ direction. The result is shown in Figure \ref{fig:Question_1}.
+			\begin{figure}[!ht]
+				\centering
+				\includegraphics[width=\columnwidth]{Question_1.eps}
+				%\scalebox{1}{\input{Question_1.tex}}
+				\caption{The first row of images is applied by simple difference operator. The second row is applied by central differences. The third row is applied by Robert's diagonal operator. The last row is applied by the Sobel operator.}
+				\label{fig:Question_1}
+			\end{figure}
+			\par The sizes of the derivative images are different from each other or from the original image because of the difference of the kernel sizes in each method. The image size is shown in Table \ref{tab:Image_Size}. 
+			\begin{table}[!ht]
+				\centering
+				\caption{Image size.}
+				\label{tab:Image_Size}
+				\begin{tabular}{ccc}
+					\hline
+					Image & $x$ direction ($y \times x$) & $y$ direction ($y \times x$) \\
+					\hline
+					Original & $256 \times 256$ & $256 \times 256$ \\
+					Simple difference operator & $256 \times 254$ & $254 \times 256$ \\
+					Central difference operator & $256 \times 254$ & $254 \times 256$ \\
+					Roberts cross edge operator & $255 \times 255$ & $255 \times 255$ \\
+					Sobel operator & $254 \times 254$ & $254 \times 254$ \\
+					\hline
+				\end{tabular}
+			\end{table}
+			\par The reason why these sizes are different is because of the difference between the kernel size of each difference operators. If the image is of size $N \times M$ and in the case of the simple difference operator, the kernel when considering the $x$-direction has size of $1 \times 3$. Since all the elements in the kernel should be multiplied by a element in the image, the kernel will fit the image $N$ times in the $y$ direction, but $M-2$ times in the $x$ direction.
+	\end{itemize}
+\section*{2\hspace{0.5cm}Point-wise thresholding of gradient magnitudes}
+	\begin{figure}[!ht]
+		\centering
+		\includegraphics[width=0.9\columnwidth]{Question_2_Tools_Gradient_Magnitude.eps}
+		\caption{Gradient magnitude of the derivative images for \texttt{few256}.}
+		\label{fig:Question_2_Tools_Gradient_Magnitude}
+	\end{figure}
+	\begin{figure}[!ht]
+		\centering
+		\includegraphics[width=0.9\columnwidth]{Question_2_Tools_Hist.eps}
+		\caption{Histogram of gradient magnitude of the derivative images for \texttt{few256}.}
+		\label{fig:Question_2_Tools_Hist}
+	\end{figure}
+		\begin{figure}[!ht]
+		\centering
+		\includegraphics[width=0.85\columnwidth]{Question_2_Tools_Threshold.eps}
+		\caption{Gradient magnitude of the derivative images with different threshold for \texttt{few256}. The threshold in the case of simple difference operator is 27.2. 13.6 for central difference operator. 32.7 for Roberts cross edge operator. 92.7 for Sobel operator.}
+		\label{fig:Question_2_Tools_Threshold}
+	\end{figure}
+	\begin{figure}[!ht]
+		\centering
+		\includegraphics[width=0.9\columnwidth]{Question_2_Godthem_Gradient_Magnitude.eps}
+		\caption{Gradient magnitude of the derivative images for \texttt{godthem256}.}
+		\label{fig:Question_2_Godthem_Gradient_Magnitude}
+	\end{figure}
+	\begin{figure}[!ht]
+		\centering
+		\includegraphics[width=0.9\columnwidth]{Question_2_Godthem_Hist.eps}
+		\caption{Histogram of gradient magnitude of the derivative images for \texttt{godthem256}.}
+		\label{fig:Question_2_Godthem_Hist}
+	\end{figure}
+	\begin{figure}[!ht]
+		\centering
+		\includegraphics[width=0.85\columnwidth]{Question_2_Godthem_Threshold.eps}
+		\caption{Gradient magnitude of the derivative images with different threshold for \texttt{godthem256}. The threshold in the case of simple difference operator is 29.1. 14.6 for central difference operator. 35.2 for Roberts cross edge operator. 103 for Sobel operator.}
+		\label{fig:Question_2_Godthem_Threshold}
+	\end{figure}
+	\begin{itemize}
+		\item\addtocounter{Counter}{1}\textbf{Question \arabic{Counter}:} Is it easy to find a threshold that results in thin edges? Explain why or why not!
+			\par It is not easy to find a threshold that results in thin edges at the most time.
+			\begin{itemize}
+				\item Applying a threshold to the whole image where the brightness for all edges are different would obtain thin edges for some objects while other edges could disappear or be too thick.
+				\item Different operator would give different result as illustrated in Figure \ref{fig:Question_2_Tools_Gradient_Magnitude}. So the threshold for each operator should be different.
+				\item Noise with big magnitude could also make it hard to find a threshold that results in thin edges.
+			\end{itemize}
+			\par However, in the case of \texttt{few256}, the histogram, Figure \ref{fig:Question_2_Tools_Hist}, accumulated to the left border of the histogram pretty well, so we can set the threshold based on the bin edges of the first cluster of the histogram. The threshold in the case of simple difference operator is 27.2. 13.6 for central difference operator. 32.7 for Roberts cross edge operator. 92.7 for Sobel operator.
+		\begin{figure}[!ht]
+			\centering
+			\includegraphics[width=0.9\columnwidth]{Question_2_Tools_Gaussian_2-25.eps}
+			\caption{Smoothed gradient magnitude using Gaussian filter with $\sigma^{2}=2.25$ for \texttt{few256}.}
+			\label{fig:Question_2_Tools_Gaussian_2-25}
+		\end{figure}
+		\begin{figure}[!ht]
+			\centering
+			\includegraphics[width=0.9\columnwidth]{Question_2_Tools_Gaussian_2-25_Hist.eps}
+			\caption{Histogram for smoothed gradient magnitude using Gaussian filter with $\sigma^{2}=2.25$ for \texttt{few256}.}
+			\label{fig:Question_2_Tools_Gaussian_2-25_Hist}
+		\end{figure}
+		\begin{figure}[!ht]
+			\centering
+			\includegraphics[width=0.85\columnwidth]{Question_2_Tools_Gaussian_2-25_Threshold.eps}
+			\caption{Smoothed gradient magnitude using Gaussian filter with $\sigma^{2}=2.25$ and different threshold for \texttt{few256}. The threshold in the case of simple difference operator is 25.4. 12.7 for central difference operator. 16 for Roberts cross edge operator. 89.9 for Sobel operator.}
+			\label{fig:Question_2_Tools_Gaussian_2-25_Threshold}
+		\end{figure}
+		\begin{figure}[!ht]
+			\centering
+			\includegraphics[width=0.9\columnwidth]{Question_2_House_Gaussian_2-25.eps}
+			\caption{Smoothed gradient magnitude using Gaussian filter with $\sigma^{2}=2.25$ for \texttt{godthem256}.}
+			\label{fig:Question_2_House_Gaussian_2-25}
+		\end{figure}
+		\begin{figure}[!ht]
+			\centering
+			\includegraphics[width=0.9\columnwidth]{Question_2_House_Gaussian_2-25_Hist.eps}
+			\caption{Histogram for smoothed gradient magnitude using Gaussian filter with $\sigma^{2}=2.25$ for \texttt{godthem256}.}
+			\label{fig:Question_2_House_Gaussian_2-25_Hist}
+		\end{figure}
+		\begin{figure}[!ht]
+			\centering
+			\includegraphics[width=0.85\columnwidth]{Question_2_House_Gaussian_2-25_Threshold.eps}
+			\caption{Smoothed gradient magnitude using Gaussian filter with $\sigma^{2}=2.25$ and different threshold for \texttt{godthem256}. The threshold in the case of simple difference operator is 23.4. 11.7 for central difference operator. 16 for Roberts cross edge operator. 93.4 for Sobel operator.}
+			\label{fig:Question_2_House_Gaussian_2-25_Threshold}
+		\end{figure}
+		\item\addtocounter{Counter}{1}\textbf{Question \arabic{Counter}:} Does smoothing the image help to find edges?
+			\par Yes, smoothing the image helps to find edges. Smoothing would remove noise from the image, thus making the detected ``edges'' are more likely to be real edges.
+			\par However, smoothing the image with Gaussian filter could blur the edges, thus making it difficult to detect the edges with difference operators and find a threshold. This can also be seen from the histograms of the images after smoothing which are more shewed when compared to the gradient magnitude with no Gaussian smoothing.
+	\end{itemize}
+
+\section*{4\hspace{0.5cm}Computing differential geometry descriptors}
+	\par The images after applying Gaussian filter to \texttt{godthem256} with different value of $\sigma^{2}$ is illustrated in Figure \ref{fig:Question_4_House_Gaussian}. The second order derivative of \texttt{godthem256} after Gaussian smoothing is shown in Figure \ref{fig:Question_4_House_Second_Order} and the third order derivative is shown in Figure \ref{fig:Question_4_House_Third_Order}. Also, the third order derivative of \texttt{few256} after Gaussian smoothing is shown in Figure \ref{fig:Question_4_Tools_Third_Order}.
+	\begin{figure}[!ht]
+		\centering
+		\includegraphics[width=0.9\columnwidth]{Question_4_House_Gaussian.eps}
+		%\scalebox{0.9}{\input{Question_4_House_Gaussian.tex}}
+		\caption{Gaussian smoothing for \texttt{godthem256} with different scale.}
+		\label{fig:Question_4_House_Gaussian}
+	\end{figure}
+	\begin{figure}[!ht]
+		\centering
+		\includegraphics[width=0.9\columnwidth]{Question_4_House_Second_Order.eps}
+		%\scalebox{0.9}{\input{Question_4_House_Second_Order.tex}}
+		\caption{Second order derivative for \texttt{godthem256} after Gaussian smoothing.}
+		\label{fig:Question_4_House_Second_Order}
+	\end{figure}
+	\begin{figure}[!ht]
+		\centering
+		\includegraphics[width=0.9\columnwidth]{Question_4_House_Third_Order.eps}
+		%\scalebox{0.9}{\input{Question_4_House_Third_Order.tex}}
+		\caption{Third order derivative for \texttt{godthem256} after Gaussian smoothing.}
+		\label{fig:Question_4_House_Third_Order}
+	\end{figure}
+	\begin{figure}[!ht]
+		\centering
+		\includegraphics[width=0.9\columnwidth]{Question_4_Tools_Third_Order.eps}
+		%\scalebox{0.9}{\input{Question_4_Tools_Third_Order.tex}}
+		\caption{Third order derivative for \texttt{few256} after Gaussian smoothing.}
+		\label{fig:Question_4_Tools_Third_Order}
+	\end{figure}
+	\begin{itemize}
+		\item\addtocounter{Counter}{1}\textbf{Question \arabic{Counter}:} What can you observe? Provide explanation based on the generated images.
+			\par From Figure \ref{fig:Question_4_House_Gaussian}, we can observe that, the larger the scale is (which means the larger the variance of the Gaussian white noise is), the more blurry and the less noisy the image becomes. This is also true when comes to the result of the edge detection. 
+			\par However, higher variance of Gaussian filter also blurs the edges and making it harder to determine the real position of the edges. Also, from Figure \ref{fig:Question_4_House_Second_Order}, \ref{fig:Question_4_House_Third_Order}, and \ref{fig:Question_4_Tools_Third_Order}, we can see that Gaussian filter with higher variance would make the edges seem to be thickened thus losing the accuracy.
+
+		\item\addtocounter{Counter}{1}\textbf{Question \arabic{Counter}:} Assemble the results of the experiment above into an illustrative collage with the \texttt{subplot} command. Which are your observations and conclusions?
+			\par As stated at the beginning of this section, the images are shown in Figure \ref{fig:Question_4_House_Gaussian}, \ref{fig:Question_4_House_Second_Order}, \ref{fig:Question_4_House_Third_Order}, and \ref{fig:Question_4_Tools_Third_Order}, where the conclusion could be extracted: the bigger the variance of the Gaussian filter applied to the image is, the less noise will appear in the high order derivative while the less accurate the edges are found.
+
+		\item\addtocounter{Counter}{1}\textbf{Question \arabic{Counter}:} How can you use the response from $\widetilde{L}_{vv}$ to detect edges, and how can you improve the result by using $\widetilde{L}_{vvv}$?
+			\par The local maximum and local minimum of the gradient magnitude would be reached when $\widetilde{L}_{vv}=0$, however, if we want to find edges more accurately, we only want the local maximum be reserved. So when $(\widetilde{L}_{vv}=0 \cap \widetilde{L}_{vvv}<0)$, the local maximum would be reached. Based on such idea, we can improve the response from $\widetilde{L}_{vv}$ by combining the result of $\widetilde{L}_{vv}$ and $\widetilde{L}_{vvv}$ above. The combining result is shown in Figure \ref{fig:Question_6_House_Lvv_Lvvv} and \ref{fig:Question_6_Tools_Lvv_Lvvv}.
+			\begin{figure}[!ht]
+				\centering
+				\includegraphics[width=0.9\columnwidth]{Question_6_House_Lvv_Lvvv.eps}
+				%\scalebox{0.9}{\input{Question_6_House_Lvv_Lvvv.tex}}
+				\caption{Combination of $\widetilde{L}_{vv}=0$ and $\widetilde{L}_{vvv}<0$ of \texttt{godthem256}.}
+				\label{fig:Question_6_House_Lvv_Lvvv}
+			\end{figure}
+			\begin{figure}[!ht]
+				\centering
+				\includegraphics[width=0.9\columnwidth]{Question_6_Tools_Lvv_Lvvv.eps}
+				%\scalebox{0.9}{\input{Question_6_House_Lvv_Lvvv.tex}}
+				\caption{Combination of $\widetilde{L}_{vv}=0$ and $\widetilde{L}_{vvv}<0$ of \texttt{few256}.}
+				\label{fig:Question_6_Tools_Lvv_Lvvv}
+			\end{figure}
+	\end{itemize}
+
+\section*{5\hspace{0.5cm}Extraction of edge segments}
+	\begin{itemize}
+		\item\addtocounter{Counter}{1}\textbf{Question \arabic{Counter}:} Present your best results obtained with \texttt{extractedge} for \texttt{house} and \texttt{tools}.
+			\par The best results obtained for \texttt{house} and \texttt{tools} are shown in Figure \ref{fig:Question_7_House_Overlay_Curves} and \ref{fig:Question_7_Tools_Overlay_Curves} respectively. The \texttt{godthem256} is applied by Gaussian smoothing with variance $\sigma^{2}=4$ and threshold $4$. The \texttt{few256} is applied by Gaussian smoothing with variance $\sigma^{2}=4$ and threshold $6$.
+			\begin{figure}[!ht]
+				\centering
+				\includegraphics[width=0.9\columnwidth]{Question_7_House_Overlay_Curves.eps}
+				%\scalebox{0.9}{\input{Question_6_House_Lvv_Lvvv.tex}}
+				\caption{Best result for \texttt{godthem256}.}
+				\label{fig:Question_7_House_Overlay_Curves}
+			\end{figure}
+			\begin{figure}[!ht]
+				\centering
+				\includegraphics[width=0.9\columnwidth]{Question_7_Tools_Overlay_Curves.eps}
+				%\scalebox{0.9}{\input{Question_6_House_Lvv_Lvvv.tex}}
+				\caption{Best result for \texttt{few256}.}
+				\label{fig:Question_7_Tools_Overlay_Curves}
+			\end{figure}
+	\end{itemize}
+
+\section*{6\hspace{0.5cm}Hough transform}
+\subsection*{6.1\hspace{0.5cm}Hints and practical advice}
+	\begin{itemize}
+		\item\addtocounter{Counter}{1}\textbf{????? Question \arabic{Counter}:} Identify the correspondences between the strongest peaks in the accumulator and line segments in the output image. Doing so convince yourself that the implementation is correct. Summarize the results in one or more figures.
+			\par The strongest peaks in the accumulator should be the longest and the most obvious line segments in the edge plot.
+		
+		\item\addtocounter{Counter}{1}\textbf{Question \arabic{Counter}:} How do the results and computational time depend on the number of cells in the accumulator?
+			\par The accuracy of the results depends on the resolution of the accumulator since the larger of \texttt{ntheta} and \texttt{nrho}, the more accurate the points and curves would be presented in the accumulator thus the intersection points would be easier to find its real position in accumulator thus finding accurate line in spatial domain. However, high resolution could also lead to more local maximum, thus giving multiple lines for a single edge we would like to obtain from the image.
+			\par When the resolution is higher, it would take much more computational time. The time complexity could be $O(n^{2})$, where $n$ is the resolution in $x$ or $y$ direction. 
+	\end{itemize}
+
+\subsection*{6.2\hspace{0.5cm}Choice of accumulator incrementation function}
+	\begin{itemize}
+		\item\addtocounter{Counter}{1}\textbf{????? Question \arabic{Counter}:} How do you propose to do this? Try out a function that you would suggest and see if it improves the results. Does it?
+			\par I would like to try some monotonically increasing function like $\log$ or square root functions. The increasing rate of such functions becomes smaller when the magnitude becomes larger.
+	\end{itemize}
+
+% Template
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\begin{figure}[H]
+%	\centering
+%	\scalebox{0.9}{\input{test.tex}}
+%	\caption{Test.}
+%	\label{fig:Test}
+%\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\begin{figure}[!ht]
+%	\footnotesize
+%	\centering 
+%	\begin{subfigure}[t]{.32\linewidth} % .32 for three polts .49 for two plots
+%	\includegraphics[width=\columnwidth]{Linearity_F.eps}
+%	\caption{Image F}
+%	\label{fig:F}
+%	\end{subfigure}
+%	\begin{subfigure}[t]{.32\linewidth} % .32 for three polts
+%	\includegraphics[width=\columnwidth]{Linearity_G.eps}
+%	\caption{Image G = F'}
+%	\label{fig:G}
+%	\end{subfigure}
+%	\begin{subfigure}[t]{.32\linewidth} % .32 for three polts
+%	\includegraphics[width=\columnwidth]{Linearity_H.eps}
+%	\caption{Image H = F + 2 * G}
+%	\label{fig:H}
+%	\end{subfigure}
+%	\caption{Origin images.}
+%	\label{fig:origin}
+%\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\begin{align*}
+%	var_{t = 0.1} &= \begin{bmatrix} 0.0133 & 0.0000 \\ 0.0000 & 0.0133 \end{bmatrix} \\
+%	var_{t = 0.3} &= \begin{bmatrix} 0.2811 & 0.0000 \\ 0.0000 & 0.2811 \end{bmatrix} \\
+%	var_{t = 1.0} &= \begin{bmatrix} 1.0000 & 0.0000 \\ 0.0000 & 1.0000 \end{bmatrix} \\
+%	var_{t = 10.0} &= \begin{bmatrix} 10.0000 & 0.0000 \\ 0.0000 & 10.0000 \end{bmatrix} \\
+%	var_{t = 100.0} &= \begin{bmatrix} 100.0000 & 0.0000 \\ 0.0000 & 10.0000 \end{bmatrix}
+%\end{align*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \lstinputlisting{x.m}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
